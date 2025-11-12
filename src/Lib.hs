@@ -30,6 +30,9 @@ import qualified Data.Map.Strict as M
 type Parser = Parsec Void Text
 type Env = M.Map String Double
 
+floatRem :: (RealFrac a) => a -> a -> a
+floatRem x y = x - (fromIntegral (floor (x / y)) * y)
+
 -- space consumer
 sc :: Parser ()
 sc = L.space
@@ -43,13 +46,13 @@ lexeme = L.lexeme sc
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
-integer :: Parser Integer
+integer :: Parser Double
 integer = lexeme L.decimal
 
 float :: Parser Double
 float = lexeme L.float
 
-signedInteger :: Parser Integer
+signedInteger :: Parser Double
 signedInteger = L.signed sc integer
 
 signedFloat :: Parser Double
@@ -87,7 +90,12 @@ data Stmt
     deriving(Show, Eq)
 
 pLiteral :: Parser Expr
-pLiteral = Lit <$> lexeme L.decimal
+pLiteral = Lit <$> choice
+    [ try signedFloat
+    , try signedInteger
+    , try float
+    , try integer
+    ]
 
 pVariable :: Parser Expr
 pVariable = Var <$> lexeme
@@ -99,8 +107,8 @@ parens = between (symbol "(") (symbol ")")
 pTerm :: Parser Expr
 pTerm = choice
     [ parens pExpr
-    , pVariable
     , pLiteral
+    , pVariable
     ]
 
 pExpr :: Parser Expr
@@ -154,7 +162,7 @@ evalExpr env expr = case expr of
             then Left ("Variable " ++ name ++ " is undefined")
         else do
             Right (fromJust $ M.lookup name env)
-        
+
 
     Neg a -> unOp negate a
 
@@ -170,6 +178,7 @@ evalExpr env expr = case expr of
                 Right (av / bv)
 
     Pow a b -> binOp (**) a b
+         
     where
         binOp op x y = do
             xv <- evalExpr env x
@@ -180,7 +189,7 @@ evalExpr env expr = case expr of
             Right (op xv)
 
 evalStmt :: Env -> Stmt -> Either String (Double, Env)
-evalStmt env stmt = 
+evalStmt env stmt =
     case stmt of
         Let name rhs ->
             if M.member name env
