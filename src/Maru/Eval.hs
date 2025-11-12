@@ -9,7 +9,6 @@ import Text.Megaparsec
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Data.Maybe
-import Control.Monad
 
 evalExpr :: Env -> Expr -> Either String Double
 evalExpr env expr = case expr of
