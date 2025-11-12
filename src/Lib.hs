@@ -78,6 +78,7 @@ data Expr
     | Sub Expr Expr
     | Mul Expr Expr
     | Div Expr Expr
+    | Pow Expr Expr
     deriving (Eq, Ord, Show)
 
 data Stmt
@@ -122,6 +123,9 @@ pStmt =
 operatorTable :: [[Operator Parser Expr]]
 operatorTable =
     [
+        [ binary "^" Pow
+        ]
+        ,
         [ prefix "-" Neg
         , prefix "+" id
         ]
@@ -164,6 +168,8 @@ evalExpr env expr = case expr of
             else do
                 av <- evalExpr env a
                 Right (av / bv)
+
+    Pow a b -> binOp (**) a b
     where
         binOp op x y = do
             xv <- evalExpr env x
