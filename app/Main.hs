@@ -4,7 +4,7 @@ module Main (main) where
 import qualified Data.Text as T
 import System.IO (hFlush, stdout)
 import qualified Data.Map.Strict as M
-import Lib (evalString)
+import Maru (evalString)
 
 main :: IO ()
 main = loop M.empty
