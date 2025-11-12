@@ -1,0 +1,37 @@
+.stack-work/
+*~
+
+# Stack build artifacts
+.stack-work/
+dist/
+dist-newstyle/ # For Cabal v2-build
+
+# Executables and libraries
+*.o
+*.hi
+*.dyn_o
+*.dyn_hi
+*.prof
+*.tix
+*.eventlog
+*.dump-*
+*.prof
+*.hpc
+*.so
+*.a
+*.dll
+*.exe
+*.lib
+
+# Documentation
+doc/
+html/
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+*.swp
+*~
+# Other
+.DS_Store
+stack.yaml.lock # Stack's dependency lock file (optional, depending on workflow)

@@ -1,0 +1,21 @@
+{-# LANGUAGE OverloadedStrings #-}
+module Main (main) where
+
+import qualified Data.Text as T
+import Control.Monad
+import System.IO (hFlush, stdout)
+import qualified Data.Map.Strict as M
+import Lib (evalString)
+
+main :: IO ()
+main = loop M.empty
+    where
+        loop env = do
+            putStr ">>> "
+            hFlush stdout
+            input <- getLine
+            case evalString env (T.pack input) of
+                Left err -> putStrLn ("Error: " ++ err)
+                Right (val, env') -> do 
+                    putStrLn ("= " ++ show val)
+                    loop env'
