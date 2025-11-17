@@ -13,6 +13,7 @@ import Data.Maybe
 evalExpr :: Env -> Expr -> Either String Double
 evalExpr env expr = case expr of
     Lit n -> Right n
+    LitWithUnit n u -> Right n
     Var name -> do
         if not $ M.member name env
             then Left ("Variable " ++ name ++ " is undefined")

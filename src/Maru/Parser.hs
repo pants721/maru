@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Maru.Parser 
+module Maru.Parser
     ( sc
     , pStmt
     ) where
@@ -53,8 +53,37 @@ identifier = (lexeme . try) (p >>= check)
                 then fail $ "keyword " ++ show x ++ " cannot be an identifier"
                 else return x
 
-reserved :: Text -> Parser ()
-reserved w = (lexeme . try) (string w *> notFollowedBy alphaNumChar *> sc)
+keyword :: Text -> Parser ()
+keyword w = (lexeme . try) (string w *> notFollowedBy alphaNumChar *> sc)
+
+pUnitId :: Parser String
+pUnitId = lexeme $ some letterChar
+
+pUnitTerm :: Parser UnitExpr
+pUnitTerm = do
+    base <- UBase <$> pUnitId
+    expo <- optional (char '^' *> L.signed sc L.decimal)
+    pure $ maybe base (UPow base) expo
+
+pUnit :: Parser UnitExpr
+pUnit = makeExprParser pUnitTerm unitOperators
+
+unitOperators :: [[Operator Parser UnitExpr]]
+unitOperators =
+    [ [InfixL (UMul <$ try (symbol "*" <* lookAhead pUnitId))
+      ,InfixL (UDiv <$ try (symbol "/" <* lookAhead pUnitId))] ]
+
+pLiteralWithUnit :: Parser Expr
+pLiteralWithUnit = do
+    val <- choice
+        [ try signedFloat
+        , try signedInteger
+        , try float
+        , try integer
+        ]
+    sc
+    unit <- pUnit
+    LitWithUnit val <$> pure unit
 
 pLiteral :: Parser Expr
 pLiteral = Lit <$> choice
@@ -63,6 +92,9 @@ pLiteral = Lit <$> choice
     , try float
     , try integer
     ]
+
+pLiteralOrLiteralWithUnit :: Parser Expr
+pLiteralOrLiteralWithUnit = try pLiteralWithUnit <|> pLiteral
 
 pVariable :: Parser Expr
 pVariable = Var <$> lexeme
@@ -74,7 +106,7 @@ parens = between (symbol "(") (symbol ")")
 pTerm :: Parser Expr
 pTerm = choice
     [ parens pExpr
-    , pLiteral
+    , pLiteralOrLiteralWithUnit
     , pVariable
     ]
 
@@ -83,7 +115,7 @@ pExpr = makeExprParser pTerm operatorTable
 
 letStmt :: Parser Stmt
 letStmt = do
-    reserved "let"
+    keyword "let"
     name <- identifier
     void (symbol "=")
     Let name <$> pExpr
